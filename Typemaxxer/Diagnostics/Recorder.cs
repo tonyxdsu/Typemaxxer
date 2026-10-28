@@ -6,6 +6,7 @@ using System.Text;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Chat;
+using Dalamud.Game.ClientState.Statuses;
 using Dalamud.Game.Text;
 using Typemaxxer.Game;
 using Typemaxxer.Input;
@@ -25,6 +26,7 @@ public sealed unsafe class Recorder : IDisposable
     private readonly Dictionary<string, string> lastUiState = [];
     private readonly Dictionary<string, string> lastBars = [];
     private readonly Dictionary<ulong, string> lastEnemyState = [];
+    private readonly Dictionary<uint, string> lastStatuses = [];
     private StreamWriter? writer;
     private DateTime startedAt;
     private DateTime lastFlush;
@@ -82,6 +84,7 @@ public sealed unsafe class Recorder : IDisposable
         lastUiState.Clear();
         lastBars.Clear();
         lastEnemyState.Clear();
+        lastStatuses.Clear();
         lastFocus = string.Empty;
         lastWords = string.Empty;
         lastEnterDown = false;
@@ -103,6 +106,7 @@ public sealed unsafe class Recorder : IDisposable
 
         Write("MARK", note.Length > 0 ? note : "(marked)");
         Write("MARK", $"  typist {plugin.Typist.State}: {plugin.Typist.Status}; paused={plugin.PauseDetector.IsPaused} {plugin.PauseDetector.Reason}");
+        Write("MARK", $"  your statuses: {(lastStatuses.Count > 0 ? string.Join(", ", lastStatuses.Select(s => $"{s.Value} #{s.Key}")) : "none")}");
         foreach (var enemy in plugin.PauseDetector.Enemies)
             Write("MARK", $"  enemy {enemy.Name} [{enemy.Kind} base {enemy.BaseId} id {enemy.ObjectId:X}] {DescribeCast(enemy, withProgress: true)}");
 
@@ -125,6 +129,7 @@ public sealed unsafe class Recorder : IDisposable
         var frame = plugin.Frame;
         ObserveUi(frame);
         ObserveEnemies(plugin.PauseDetector);
+        ObserveStatuses();
 
         var words = string.Join(", ", frame.Words.Select(w => $"\"{w.Text}\"#{w.RowId}"));
         if (words != lastWords)
@@ -244,6 +249,37 @@ public sealed unsafe class Recorder : IDisposable
 
             lastBars[key] = bars;
             Write("BAR", $"{key} {bars}");
+        }
+    }
+
+    // Your character's status effects, in case an attack leaves one that marks when typing is dangerous.
+    private void ObserveStatuses()
+    {
+        var current = new Dictionary<uint, IStatus>();
+        if (Plugin.ObjectTable.LocalPlayer is { } player)
+        {
+            foreach (var status in player.StatusList)
+            {
+                if (status.StatusId != 0)
+                    current[status.StatusId] = status;
+            }
+        }
+
+        foreach (var (id, status) in current)
+        {
+            if (lastStatuses.ContainsKey(id))
+                continue;
+
+            var name = status.GameData.ValueNullable?.Name.ExtractText() is { Length: > 0 } statusName ? statusName : $"status {id}";
+            lastStatuses[id] = name;
+            Write("STATUS", $"+{name} #{id} ({status.RemainingTime:0.0}s, param {status.Param}, " +
+                            $"from {status.SourceObject?.Name.TextValue ?? $"{status.SourceId:X}"})");
+        }
+
+        foreach (var id in lastStatuses.Keys.Where(id => !current.ContainsKey(id)).ToList())
+        {
+            Write("STATUS", $"-{lastStatuses[id]} #{id}");
+            lastStatuses.Remove(id);
         }
     }
 
