@@ -77,6 +77,17 @@ public class MainWindow : Window, IDisposable
         ImGuiHelpers.ScaledDummy(4f);
     }
 
+    // Picking a preset sets both of its values; the sliders under Advanced fine-tune them from there.
+    private void UsePreset(SpeedMode mode)
+    {
+        var configuration = plugin.Configuration;
+        var preset = SpeedProfile.Preset(mode);
+        configuration.SpeedMode = mode;
+        configuration.TypingSpeed = preset.CharsPerSecond;
+        configuration.PromptPauseSeconds = preset.PromptPauseSeconds;
+        configuration.Save();
+    }
+
     private void DrawSettings()
     {
         var configuration = plugin.Configuration;
@@ -84,40 +95,23 @@ public class MainWindow : Window, IDisposable
             return;
 
         ImGui.Text("Speed");
-        if (ImGui.RadioButton(SpeedProfile.HumanLike.Name, configuration.SpeedMode == SpeedMode.HumanLike))
+        foreach (var (mode, preset) in SpeedProfile.Presets)
         {
-            configuration.SpeedMode = SpeedMode.HumanLike;
-            configuration.Save();
+            if (ImGui.RadioButton(preset.Name, configuration.SpeedMode == mode))
+                UsePreset(mode);
+            ImGui.SameLine();
+            ImGui.TextDisabled(preset.Description);
         }
 
-        ImGui.Indent();
+        var selected = SpeedProfile.Preset(configuration.SpeedMode);
+        if (Math.Abs(configuration.TypingSpeed - selected.CharsPerSecond) > 0.05f ||
+            Math.Abs(configuration.PromptPauseSeconds - selected.PromptPauseSeconds) > 0.005f)
+            ImGui.TextColored(ImGuiColors.DalamudYellow,
+                              $"Fine-tuned under Advanced: {configuration.TypingSpeed:0.0} characters/s, {configuration.PromptPauseSeconds:0.00} s between prompts");
+
         ImGui.PushTextWrapPos();
-        ImGui.TextDisabled(SpeedProfile.HumanLike.Description);
+        ImGui.TextDisabled("Every speed types with natural, uneven timing: the pace drifts from prompt to prompt, slows a little after spaces and hesitates now and then.");
         ImGui.PopTextWrapPos();
-
-        var typingSpeed = configuration.TypingSpeed;
-        if (ImGui.SliderFloat($"Typing speed (~{typingSpeed * 12:0} WPM)###typingSpeed", ref typingSpeed,
-                              Configuration.MinTypingSpeed, Configuration.MaxTypingSpeed, "%.1f characters/s"))
-            configuration.TypingSpeed = typingSpeed;
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            configuration.Save();
-
-        var promptPause = configuration.PromptPauseSeconds;
-        if (ImGui.SliderFloat("Pause between prompts###promptPause", ref promptPause, 0f, Configuration.MaxPromptPauseSeconds, "%.2f s"))
-            configuration.PromptPauseSeconds = promptPause;
-        if (ImGui.IsItemDeactivatedAfterEdit())
-            configuration.Save();
-        UiHelpers.HelpMarker("How long Typemaxxer waits between finishing one prompt and starting the next.");
-
-        if (ImGui.Button("Reset speed"))
-        {
-            configuration.TypingSpeed = Configuration.DefaultTypingSpeed;
-            configuration.PromptPauseSeconds = Configuration.DefaultPromptPauseSeconds;
-            configuration.Save();
-        }
-
-        ImGui.TextDisabled("Faster presets are on the way.");
-        ImGui.Unindent();
         ImGuiHelpers.ScaledDummy(4f);
 
         var autoPressEnter = configuration.AutoPressEnter;
@@ -148,6 +142,25 @@ public class MainWindow : Window, IDisposable
         if (!ImGui.CollapsingHeader("Advanced"))
             return;
 
+        ImGui.Text("Speed fine-tuning");
+        var typingSpeed = configuration.TypingSpeed;
+        if (ImGui.SliderFloat($"Typing speed (~{typingSpeed * 12:0} WPM)###typingSpeed", ref typingSpeed,
+                              Configuration.MinTypingSpeed, Configuration.MaxTypingSpeed, "%.1f characters/s"))
+            configuration.TypingSpeed = typingSpeed;
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            configuration.Save();
+
+        var promptPause = configuration.PromptPauseSeconds;
+        if (ImGui.SliderFloat("Pause between prompts###promptPause", ref promptPause, 0f, Configuration.MaxPromptPauseSeconds, "%.2f s"))
+            configuration.PromptPauseSeconds = promptPause;
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            configuration.Save();
+        UiHelpers.HelpMarker("How long Typemaxxer waits between finishing one prompt and starting the next.");
+
+        if (ImGui.Button($"Reset to {SpeedProfile.Preset(configuration.SpeedMode).Name}"))
+            UsePreset(configuration.SpeedMode);
+
+        ImGuiHelpers.ScaledDummy(6f);
         ImGui.TextWrapped("Some enemy attacks, like Cursed Gaze, punish typing just after they land. Typemaxxer goes quiet " +
                           "shortly before they land and stays quiet until their effect wears off. Through other attacks it " +
                           "keeps typing, so you can defeat the enemy first. You shouldn't need to change these.");

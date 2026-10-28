@@ -8,11 +8,11 @@ namespace Typemaxxer;
 [Serializable]
 public class Configuration : IPluginConfiguration
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     public const float DefaultTypingSpeed = 10f;
     public const float MinTypingSpeed = 3f;
-    public const float MaxTypingSpeed = 16f;
-    public const float DefaultPromptPauseSeconds = 0.2f;
+    public const float MaxTypingSpeed = 20f;
+    public const float DefaultPromptPauseSeconds = 0.3f;
     public const float MaxPromptPauseSeconds = 1f;
     public const float DefaultPauseLeadSeconds = 1.5f;
     public const float DefaultPauseTrailSeconds = 1f;
@@ -21,7 +21,7 @@ public class Configuration : IPluginConfiguration
     public int Version { get; set; } = CurrentVersion;
 
     // Everyday settings.
-    public SpeedMode SpeedMode { get; set; } = SpeedMode.HumanLike;
+    public SpeedMode SpeedMode { get; set; } = SpeedMode.Gamer;
     public float TypingSpeed { get; set; } = DefaultTypingSpeed;
     public float PromptPauseSeconds { get; set; } = DefaultPromptPauseSeconds;
     public bool AutoPressEnter { get; set; } = false;
@@ -61,6 +61,10 @@ public class Configuration : IPluginConfiguration
         // player for inactivity after about a minute and a half.
         if (Version < 3 && InputBackend == InputBackend.WindowMessageChar)
             InputBackend = InputBackend.Keyboard;
+
+        // Version 3 had a single "Human-like" preset (0). Its successor is Gamer; the player's tuned speed and pause stay.
+        if (Version < 4 && (int)SpeedMode == 0)
+            SpeedMode = SpeedMode.Gamer;
 
         Version = CurrentVersion;
         Save();

@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 
 namespace Typemaxxer.Automation;
 
-/// <summary>The speed presets users choose from. "Reasonably fast" and "Ludicrous" will join Human-like later.</summary>
+/// <summary>The speed presets users choose from.</summary>
 public enum SpeedMode
 {
-    HumanLike = 0,
+    // 0 was the original single "Human-like" preset; settings saved with it are moved to Gamer.
+    Grandpa = 1,
+    Gamer = 2,
+    LudicrousSpeed = 3,
 }
 
 /// <summary>
@@ -26,9 +30,11 @@ public sealed record SpeedProfile(
     float PromptPauseSeconds,
     float PromptPauseVariation)
 {
-    public static readonly SpeedProfile HumanLike = new(
-        Name: "Human-like",
-        Description: "Natural, uneven timing: the pace drifts from prompt to prompt, slows a little after spaces and hesitates now and then.",
+    // The natural, uneven timing every preset shares: the pace drifts from prompt to prompt, slows a little after spaces
+    // and hesitates now and then. The presets only differ in speed and in the pause between prompts.
+    private static readonly SpeedProfile Natural = new(
+        Name: string.Empty,
+        Description: string.Empty,
         CharsPerSecond: Configuration.DefaultTypingSpeed,
         PromptSpeedVariation: 0.15f,
         KeyJitter: 0.30f,
@@ -40,14 +46,40 @@ public sealed record SpeedProfile(
         PromptPauseSeconds: Configuration.DefaultPromptPauseSeconds,
         PromptPauseVariation: 0.33f);
 
-    /// <summary>The preset the player picked, with their speed and pause sliders applied (kept within the sliders' range).</summary>
-    public static SpeedProfile For(Configuration configuration) => configuration.SpeedMode switch
+    public static readonly SpeedProfile Grandpa = Natural with
     {
-        _ => HumanLike with
-        {
-            CharsPerSecond = Math.Clamp(configuration.TypingSpeed, Configuration.MinTypingSpeed, Configuration.MaxTypingSpeed),
-            PromptPauseSeconds = Math.Clamp(configuration.PromptPauseSeconds, 0f, Configuration.MaxPromptPauseSeconds),
-        },
+        Name = "Grandpa", Description = "5 characters/s, 0.5 s between prompts", CharsPerSecond = 5f, PromptPauseSeconds = 0.5f,
+    };
+
+    public static readonly SpeedProfile Gamer = Natural with
+    {
+        Name = "Gamer", Description = "10 characters/s, 0.3 s between prompts", CharsPerSecond = 10f, PromptPauseSeconds = 0.3f,
+    };
+
+    public static readonly SpeedProfile LudicrousSpeed = Natural with
+    {
+        Name = "Ludicrous Speed", Description = "15 characters/s, 0.2 s between prompts", CharsPerSecond = 15f, PromptPauseSeconds = 0.2f,
+    };
+
+    public static readonly IReadOnlyList<(SpeedMode Mode, SpeedProfile Profile)> Presets =
+    [
+        (SpeedMode.Grandpa, Grandpa),
+        (SpeedMode.Gamer, Gamer),
+        (SpeedMode.LudicrousSpeed, LudicrousSpeed),
+    ];
+
+    public static SpeedProfile Preset(SpeedMode mode) => mode switch
+    {
+        SpeedMode.Grandpa => Grandpa,
+        SpeedMode.LudicrousSpeed => LudicrousSpeed,
+        _ => Gamer,
+    };
+
+    /// <summary>The preset the player picked, with the speed sliders under Advanced applied (kept within their range).</summary>
+    public static SpeedProfile For(Configuration configuration) => Preset(configuration.SpeedMode) with
+    {
+        CharsPerSecond = Math.Clamp(configuration.TypingSpeed, Configuration.MinTypingSpeed, Configuration.MaxTypingSpeed),
+        PromptPauseSeconds = Math.Clamp(configuration.PromptPauseSeconds, 0f, Configuration.MaxPromptPauseSeconds),
     };
 }
 
@@ -58,8 +90,8 @@ public sealed class KeyTiming
     private const float SubmitShare = 0.3f;
 
     private readonly Random random = new();
-    private SpeedProfile profile = SpeedProfile.HumanLike;
-    private float keyInterval = 1f / SpeedProfile.HumanLike.CharsPerSecond;
+    private SpeedProfile profile = SpeedProfile.Gamer;
+    private float keyInterval = 1f / SpeedProfile.Gamer.CharsPerSecond;
 
     /// <summary>Starts a new prompt. Each prompt gets a slightly different pace, like a person's would.</summary>
     public void StartPrompt(SpeedProfile speedProfile)
