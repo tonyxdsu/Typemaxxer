@@ -1,0 +1,29 @@
+[
+  {
+    "Author": "tonyxdsu",
+    "Name": "Typemaxxer",
+    "InternalName": "Typemaxxer",
+    "AssemblyVersion": "1.0.0.0",
+    "Description": "Typemaxxer reads the prompts above the enemies in the Gold Saucer's Keybound Brawler and types them for you with natural, uneven timing, at Grandpa, Gamer or Ludicrous Speed. You stay in control: by default it types each prompt and you press Enter to attack.\n\nIt only acts inside Keybound Brawler, never types into the chat box, goes quiet for attacks that punish typing, stops when the game window isn't in front and switches itself off when you leave the match. Open it with /tmx.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/tonyxdsu/Typemaxxer",
+    "Tags": [
+      "gold saucer",
+      "keybound brawler",
+      "typing",
+      "minigame",
+      "mgc"
+    ],
+    "DalamudApiLevel": 15,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "Punchline": "Types the Keybound Brawler prompts for you, at the speed you choose.",
+    "AcceptsFeedback": true,
+    "DownloadLinkInstall": "https://github.com/tonyxdsu/Typemaxxer/releases/latest/download/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/tonyxdsu/Typemaxxer/releases/latest/download/latest.zip",
+    "DownloadLinkTesting": "https://github.com/tonyxdsu/Typemaxxer/releases/latest/download/latest.zip",
+    "LastUpdate": 1793202449
+  }
+]

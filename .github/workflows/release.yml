@@ -1,0 +1,61 @@
+name: Release
+
+# Push a tag like v1.0.0 to publish that version: this builds the plugin, attaches latest.zip to a GitHub
+# release, and updates repo.json on main (which GitHub Pages serves as the custom plugin repository).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile "$env:RUNNER_TEMP\dalamud.zip"
+          Expand-Archive -Force "$env:RUNNER_TEMP\dalamud.zip" "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          dotnet build Typemaxxer.slnx --configuration Release -p:Version=$version
+
+      - name: Create the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}" "Typemaxxer/bin/x64/Release/Typemaxxer/latest.zip"
+          --title "Typemaxxer ${{ github.ref_name }}" --generate-notes
+
+      - name: Update repo.json on main
+        shell: pwsh
+        run: |
+          $manifest = Get-Content "Typemaxxer/bin/x64/Release/Typemaxxer/Typemaxxer.json" -Raw | ConvertFrom-Json
+          $download = "https://github.com/${{ github.repository }}/releases/latest/download/latest.zip"
+          foreach ($link in 'DownloadLinkInstall', 'DownloadLinkUpdate', 'DownloadLinkTesting') {
+            $manifest | Add-Member -NotePropertyName $link -NotePropertyValue $download -Force
+          }
+          $manifest | Add-Member -NotePropertyName LastUpdate -NotePropertyValue ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Force
+
+          git fetch --depth=1 origin main
+          git checkout -B main FETCH_HEAD
+          ConvertTo-Json -InputObject @($manifest) -Depth 5 | Set-Content repo.json -Encoding utf8NoBOM
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add repo.json
+          git commit -m "Update repo.json for ${{ github.ref_name }}"
+          git push origin main
