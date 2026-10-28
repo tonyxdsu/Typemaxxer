@@ -159,7 +159,7 @@ public class MainWindow : Window, IDisposable
             configuration.Save();
 
         var trail = configuration.PauseTrailSeconds;
-        if (ImGui.SliderFloat("Quiet after an attack", ref trail, 0f, 3f, "%.1f s"))
+        if (ImGui.SliderFloat("Quiet after an attack", ref trail, 0f, Configuration.MaxPauseTrailSeconds, "%.1f s"))
             configuration.PauseTrailSeconds = trail;
         if (ImGui.IsItemDeactivatedAfterEdit())
             configuration.Save();

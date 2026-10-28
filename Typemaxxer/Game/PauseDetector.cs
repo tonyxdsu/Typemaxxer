@@ -36,6 +36,9 @@ public sealed class PauseDetector
 
     public bool IsPaused { get; private set; }
     public string Reason { get; private set; } = string.Empty;
+
+    /// <summary>Whether an attack that punishes typing is about to land (it is within its quiet-before window).</summary>
+    public bool AttackIncoming { get; private set; }
     public IReadOnlyList<KtgEnemy> Enemies { get; private set; } = [];
 
     public void Update(Configuration configuration, KtgFrame frame)
@@ -44,6 +47,7 @@ public sealed class PauseDetector
         {
             Enemies = [];
             IsPaused = false;
+            AttackIncoming = false;
             Reason = string.Empty;
             quietUntil = DateTime.MinValue;
             return;
@@ -53,6 +57,7 @@ public sealed class PauseDetector
         var reason = frame.InputLockout is { } secondsLeft ? $"inputs disabled ({secondsLeft} s)" : null;
         var extraPunishing = configuration.ExtraQuietCasts.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var playerId = Plugin.ObjectTable.LocalPlayer?.GameObjectId;
+        var attackIncoming = false;
         var enemies = new List<KtgEnemy>();
         foreach (var gameObject in Plugin.ObjectTable)
         {
@@ -78,10 +83,14 @@ public sealed class PauseDetector
 
             var remaining = character.TotalCastTime - character.CurrentCastTime;
             if (configuration.PauseOnEnemyCasts && punishes && remaining <= configuration.PauseLeadSeconds)
+            {
                 reason ??= $"{castName} ({Math.Max(0, remaining):0.0} s left)";
+                attackIncoming = true;
+            }
         }
 
         Enemies = enemies;
+        AttackIncoming = attackIncoming;
 
         if (reason == null && configuration.PauseWhileEnemyCastBarVisible &&
             frame.Addons.Any(a => a.Visible && a.Name == KtgUi.EnemyCastBarAddon))

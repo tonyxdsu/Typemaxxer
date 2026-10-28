@@ -15,7 +15,8 @@ public class Configuration : IPluginConfiguration
     public const float DefaultPromptPauseSeconds = 0.2f;
     public const float MaxPromptPauseSeconds = 1f;
     public const float DefaultPauseLeadSeconds = 2.5f;
-    public const float DefaultPauseTrailSeconds = 1.5f;
+    public const float DefaultPauseTrailSeconds = 3f;
+    public const float MaxPauseTrailSeconds = 6f;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -53,7 +54,7 @@ public class Configuration : IPluginConfiguration
 
         // Version 1 resumed 0.5 s after an attack, which is too soon: a key 0.67 s after the cast ended got inputs disabled.
         if (Version < 2 && PauseTrailSeconds == 0.5f)
-            PauseTrailSeconds = DefaultPauseTrailSeconds;
+            PauseTrailSeconds = 1.5f;
 
         // Version 2 posted letters to the game window, which the mini-game doesn't count as typing, so it expelled the
         // player for inactivity after about a minute and a half.
