@@ -58,7 +58,8 @@ public sealed unsafe class Recorder : IDisposable
                              $"intendedUse={KtgUi.CurrentTerritoryIntendedUse} prompts={plugin.Dictionary.PromptCount}");
             Write("SESSION", $"input={configuration.InputBackend} speed={configuration.SpeedMode} autoEnter={configuration.AutoPressEnter} " +
                              $"pauseLead={configuration.PauseLeadSeconds} pauseTrail={configuration.PauseTrailSeconds} " +
-                             $"enemyCastPause={configuration.PauseOnEnemyCasts} castBarPause={configuration.PauseWhileEnemyCastBarVisible} " +
+                             $"enemyCastPause={configuration.PauseOnEnemyCasts} allCastsPause={configuration.PauseOnAllEnemyCasts} " +
+                             $"extraQuietCasts='{configuration.ExtraQuietCasts}' castBarPause={configuration.PauseWhileEnemyCastBarVisible} " +
                              $"extraPause='{configuration.ExtraPauseAddons}'");
         }
         catch (Exception e)
@@ -103,10 +104,7 @@ public sealed unsafe class Recorder : IDisposable
         Write("MARK", note.Length > 0 ? note : "(marked)");
         Write("MARK", $"  typist {plugin.Typist.State}: {plugin.Typist.Status}; paused={plugin.PauseDetector.IsPaused} {plugin.PauseDetector.Reason}");
         foreach (var enemy in plugin.PauseDetector.Enemies)
-        {
-            Write("MARK", $"  enemy {enemy.Name} [{enemy.Kind} base {enemy.BaseId} id {enemy.ObjectId:X}] " +
-                          (enemy.IsCasting ? $"casting action {enemy.CastActionId} {enemy.CastTime:0.00}/{enemy.TotalCastTime:0.00} s" : "idle"));
-        }
+            Write("MARK", $"  enemy {enemy.Name} [{enemy.Kind} base {enemy.BaseId} id {enemy.ObjectId:X}] {DescribeCast(enemy, withProgress: true)}");
 
         foreach (var addon in plugin.Frame.Addons.Where(a => a.Visible))
         {
@@ -249,6 +247,13 @@ public sealed unsafe class Recorder : IDisposable
         }
     }
 
+    // Everything that might tell attacks that punish typing apart from ones to defeat the enemy before.
+    private static string DescribeCast(KtgEnemy enemy, bool withProgress) => !enemy.IsCasting
+        ? "idle"
+        : $"casting {enemy.CastName} #{enemy.CastActionId} " +
+          (withProgress ? $"{enemy.CastTime:0.00}/{enemy.TotalCastTime:0.00}s" : $"({enemy.TotalCastTime:0.00}s)") +
+          $" interruptible={enemy.Interruptible} target={enemy.CastTarget} quiet={enemy.PunishesTyping}";
+
     private static string BarSummary(KtgAddon addon) =>
         string.Join(" ", addon.ShapeNodes.Where(s => s.Visible).Select(s => $"s{s.Path}={s.DrawnWidth:0}"));
 
@@ -269,7 +274,7 @@ public sealed unsafe class Recorder : IDisposable
         foreach (var enemy in pause.Enemies)
         {
             seen.Add(enemy.ObjectId);
-            var state = enemy.IsCasting ? $"casting action {enemy.CastActionId} ({enemy.TotalCastTime:0.00}s)" : "idle";
+            var state = DescribeCast(enemy, withProgress: false);
             var known = lastEnemyState.TryGetValue(enemy.ObjectId, out var previous);
             if (known && previous == state)
                 continue;

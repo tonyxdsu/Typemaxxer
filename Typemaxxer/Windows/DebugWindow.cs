@@ -209,14 +209,31 @@ public class DebugWindow : Window, IDisposable
 
         ImGuiHelpers.ScaledDummy(4f);
         var enemyCastPause = configuration.PauseOnEnemyCasts;
-        if (ImGui.Checkbox("Go quiet near the end of enemy casts", ref enemyCastPause))
+        if (ImGui.Checkbox("Go quiet before attacks that punish typing", ref enemyCastPause))
         {
             configuration.PauseOnEnemyCasts = enemyCastPause;
             configuration.Save();
         }
 
-        UiHelpers.HelpMarker("Pauses from \"Quiet before an attack\" seconds before any enemy's cast finishes " +
-                             "(set under Advanced in the main window). The status line names the enemy.");
+        UiHelpers.HelpMarker("Cursed Gaze, plus the attacks listed below: Typemaxxer stops \"Quiet before an attack\" seconds before they " +
+                             "land (set under Advanced in the main window). Other attacks are ones to defeat the enemy before, so it keeps typing.");
+
+        var extraQuietCasts = configuration.ExtraQuietCasts;
+        if (ImGui.InputText("Also go quiet for these attacks", ref extraQuietCasts, 512))
+            configuration.ExtraQuietCasts = extraQuietCasts;
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            configuration.Save();
+        UiHelpers.HelpMarker("Attack names or action ids, separated by commas, e.g. \"Cursed Gaze, 49529\". " +
+                             "The Enemies section below shows both while an enemy casts.");
+
+        var allCastsPause = configuration.PauseOnAllEnemyCasts;
+        if (ImGui.Checkbox("Go quiet for every enemy cast", ref allCastsPause))
+        {
+            configuration.PauseOnAllEnemyCasts = allCastsPause;
+            configuration.Save();
+        }
+
+        UiHelpers.HelpMarker("The old cautious behaviour: also stops for attacks you should defeat the enemy before, so those may land.");
 
         var castBarPause = configuration.PauseWhileEnemyCastBarVisible;
         if (ImGui.Checkbox("Go quiet while the enemy cast bar window is up", ref castBarPause))
@@ -364,13 +381,14 @@ public class DebugWindow : Window, IDisposable
             return;
         }
 
-        if (!ImGui.BeginTable("enemies", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg))
+        if (!ImGui.BeginTable("enemies", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg))
             return;
 
         ImGui.TableSetupColumn("Name");
         ImGui.TableSetupColumn("Kind / base id");
         ImGui.TableSetupColumn("Cast");
         ImGui.TableSetupColumn("Cast time");
+        ImGui.TableSetupColumn("Interruptible / target / quiet");
         ImGui.TableHeadersRow();
 
         foreach (var enemy in enemies)
@@ -381,9 +399,12 @@ public class DebugWindow : Window, IDisposable
             ImGui.TableNextColumn();
             ImGui.Text($"{enemy.Kind} {enemy.BaseId}");
             ImGui.TableNextColumn();
-            ImGui.Text(enemy.IsCasting ? $"action {enemy.CastActionId}" : "-");
+            ImGui.TextColored(enemy.PunishesTyping ? ImGuiColors.DalamudOrange : ImGuiColors.DalamudWhite,
+                              enemy.IsCasting ? $"{enemy.CastName} #{enemy.CastActionId}" : "-");
             ImGui.TableNextColumn();
             ImGui.Text(enemy.IsCasting ? $"{enemy.CastTime:0.00} / {enemy.TotalCastTime:0.00} s" : "-");
+            ImGui.TableNextColumn();
+            ImGui.Text(enemy.IsCasting ? $"{enemy.Interruptible} / {enemy.CastTarget} / {enemy.PunishesTyping}" : "-");
         }
 
         ImGui.EndTable();

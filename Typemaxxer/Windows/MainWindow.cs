@@ -148,8 +148,9 @@ public class MainWindow : Window, IDisposable
         if (!ImGui.CollapsingHeader("Advanced"))
             return;
 
-        ImGui.TextWrapped("Typing near the end of an enemy's attack is punished, so Typemaxxer goes quiet just before " +
-                          "attacks land. You shouldn't need to change these.");
+        ImGui.TextWrapped("Some enemy attacks, like Cursed Gaze, punish typing near their end, so Typemaxxer goes quiet just " +
+                          "before they land. Through other attacks it keeps typing, so you can defeat the enemy first. " +
+                          "You shouldn't need to change these.");
 
         var lead = configuration.PauseLeadSeconds;
         if (ImGui.SliderFloat("Quiet before an attack", ref lead, 0.5f, 5f, "%.1f s"))

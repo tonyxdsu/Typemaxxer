@@ -35,6 +35,8 @@ public class Configuration : IPluginConfiguration
     public bool DeveloperMode { get; set; } = false;
     public InputBackend InputBackend { get; set; } = InputBackend.Keyboard;
     public bool PauseOnEnemyCasts { get; set; } = true;
+    public string ExtraQuietCasts { get; set; } = string.Empty;
+    public bool PauseOnAllEnemyCasts { get; set; } = false;
     public bool PauseWhileEnemyCastBarVisible { get; set; } = false;
     public string ExtraPauseAddons { get; set; } = string.Empty;
     public bool RecordSessions { get; set; } = false;
