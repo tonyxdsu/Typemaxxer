@@ -2,7 +2,7 @@
 
 Typemaxxer is a Dalamud plugin for Final Fantasy XIV. It types the prompts in **Keybound Brawler**, the Gold Saucer's typing mini-game, for you, at the speed you choose.
 
-It reads the prompt above each enemy, types it into the mini-game's input box with natural, uneven timing, and lets you press Enter to attack (or presses it for you, if you ask).
+It reads the prompt above each enemy, types it into the mini-game's input box with natural, uneven timing, and presses Enter to attack (or leaves that to you, if you prefer).
 
 ## Install
 
@@ -21,7 +21,7 @@ Updates arrive through the plugin installer like any other plugin.
 
 1. Join a Keybound Brawler match at the Gold Saucer.
 2. Press **Start Typing!** (or type `/tmx on`), then click anywhere on the game screen.
-3. Typemaxxer types the prompt above an enemy. Press Enter to attack, or turn on **Press Enter for me**.
+3. Typemaxxer types the prompt above an enemy and presses Enter to attack. To press Enter yourself, turn off **Press Enter for me**.
 
 It switches itself off when you leave the match. `/tmx off` stops it at any time.
 
@@ -44,7 +44,7 @@ It switches itself off when you leave the match. `/tmx off` stops it at any time
 | Gamer (default) | 10 characters/s (~120 WPM) | 0.3 s |
 | Ludicrous Speed | 15 characters/s (~180 WPM) | 0.2 s |
 
-- **Press Enter for me:** off by default, so you press Enter to attack. On, Typemaxxer presses it too.
+- **Press Enter for me:** on by default. Turn it off to press Enter yourself after each prompt.
 - **Show status during matches:** a small line at the top of the screen that says what Typemaxxer is doing.
 - **Advanced:**
   - Fine-tune typing speed (up to 20 characters/s) and the pause between prompts.
@@ -52,9 +52,6 @@ It switches itself off when you leave the match. `/tmx off` stops it at any time
   - **Send simulated keypresses upon focus loss**: keeps typing while the game is in the background. The game counts that as idle and expels you after about 90 s, so it's only for short alt-tabs.
 
 ## FAQ
-
-**Is this allowed?**
-No. Third-party tools, and automation in particular, are against the FINAL FANTASY XIV Terms of Service, and accounts can be suspended for it. Use Typemaxxer at your own risk, and don't mention it in game.
 
 **Can other players tell?**
 They see your score. Grandpa and Gamer type within the range of a fast human typist; Ludicrous Speed is faster than almost anyone.
