@@ -293,7 +293,6 @@ public sealed class Typist
                 return;
             }
 
-            GameActivity.MarkActive();
             openSentAt = now;
             nextKeyAt = now + timing.OpenDelay();
         }
@@ -328,7 +327,6 @@ public sealed class Typist
         }
 
         plugin.Recorder.Write("KEY", $"{Sender.Name} '{c}'");
-        GameActivity.MarkActive();
         TypedCount = position + 1;
         lastKeySentAt = now;
         framesSinceKey = 0;
@@ -357,7 +355,6 @@ public sealed class Typist
                 Sender.SendBackspace();
         }
 
-        GameActivity.MarkActive();
         TypedCount = 0;
         lastKeySentAt = now;
         framesSinceKey = 0;
@@ -378,7 +375,6 @@ public sealed class Typist
             return;
         }
 
-        GameActivity.MarkActive();
         submittedAt = now;
         Show(TypistState.Submitting, "Attacking...");
     }

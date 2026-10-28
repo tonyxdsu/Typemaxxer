@@ -4,12 +4,13 @@ using System.Runtime.InteropServices;
 
 namespace Typemaxxer.Input;
 
-/// <summary>The ways Typemaxxer can deliver keystrokes. Which one the mini-game listens to is still being tested.</summary>
+/// <summary>The ways Typemaxxer can deliver keystrokes. <see cref="Keyboard"/> is the default; the others are for testing.</summary>
 public enum InputBackend
 {
     WindowMessageChar = 0,
     WindowMessageKeys = 1,
     SendInputUnicode = 2,
+    Keyboard = 3,
 }
 
 public interface IKeySender
@@ -23,17 +24,38 @@ public interface IKeySender
 
 public static class KeySenders
 {
-    private static readonly IKeySender[] Senders =
-    [
-        new WindowMessageCharSender(),
-        new WindowMessageKeySender(),
-        new SendInputUnicodeSender(),
-    ];
+    private static readonly IKeySender Keyboard = new KeyboardSender();
+    private static readonly IKeySender WindowMessageChar = new WindowMessageCharSender();
+    private static readonly IKeySender WindowMessageKeys = new WindowMessageKeySender();
+    private static readonly IKeySender SendInputUnicode = new SendInputUnicodeSender();
 
-    public static IReadOnlyList<IKeySender> All => Senders;
+    public static IKeySender For(InputBackend backend) => backend switch
+    {
+        InputBackend.WindowMessageChar => WindowMessageChar,
+        InputBackend.WindowMessageKeys => WindowMessageKeys,
+        InputBackend.SendInputUnicode => SendInputUnicode,
+        _ => Keyboard,
+    };
+}
 
-    public static IKeySender For(InputBackend backend) =>
-        (int)backend >= 0 && (int)backend < Senders.Length ? Senders[(int)backend] : Senders[0];
+/// <summary>
+/// Types with real key presses through Windows while the game window is in front, exactly like your own typing. The
+/// mini-game only counts typed letters as activity (it expels players who type nothing for about a minute and a half),
+/// so this is the default. When the game isn't in front, or a character has no key on the keyboard layout, the
+/// character is posted to the game window instead.
+/// </summary>
+internal sealed class KeyboardSender : IKeySender
+{
+    private static readonly WindowMessageCharSender Posted = new();
+
+    public string Name => "Keyboard";
+    public string Description => "Real key presses while the game is in front (counts as typing); posts characters otherwise.";
+
+    public bool SendChar(char c) => GameWindowInput.TypeRealChar(c, KeyHold.Next()) || Posted.SendChar(c);
+
+    public bool SendEnter() => Posted.SendEnter();
+
+    public bool SendBackspace() => Posted.SendBackspace();
 }
 
 /// <summary>
@@ -48,7 +70,7 @@ internal sealed class WindowMessageCharSender : IKeySender
 
     public bool SendChar(char c)
     {
-        GameWindowInput.TryGetVirtualKey(c, out var virtualKey, out _);
+        GameWindowInput.TryGetVirtualKey(c, out var virtualKey, out _, out _);
         return GameWindowInput.Post(NativeMethods.WmChar, c, GameWindowInput.KeyLParam(virtualKey, false));
     }
 
@@ -72,7 +94,7 @@ internal sealed class WindowMessageKeySender : IKeySender
 
     public bool SendChar(char c)
     {
-        if (!GameWindowInput.TryGetVirtualKey(c, out var virtualKey, out var needsShift))
+        if (!GameWindowInput.TryGetVirtualKey(c, out var virtualKey, out var needsShift, out _))
             return false;
 
         if (needsShift)

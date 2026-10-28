@@ -128,7 +128,8 @@ public class MainWindow : Window, IDisposable
         }
 
         UiHelpers.HelpMarker("Off: Typemaxxer types each prompt, and you press Enter to attack.\nOn: Typemaxxer presses Enter for you as well.\n\n" +
-                             "Either way, Typemaxxer's typing counts as your activity, so the game won't expel you for inactivity while it types.");
+                             "Either way, while the game window is in front Typemaxxer types with real key presses, so the game counts you as active. " +
+                             "If you switch to another window, it keeps typing, but the game may expel you for inactivity after about a minute and a half.");
 
         var showOverlay = configuration.ShowStatusOverlay;
         if (ImGui.Checkbox("Show status during matches", ref showOverlay))

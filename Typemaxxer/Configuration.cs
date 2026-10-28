@@ -8,7 +8,7 @@ namespace Typemaxxer;
 [Serializable]
 public class Configuration : IPluginConfiguration
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public const float DefaultTypingSpeed = 10f;
     public const float MinTypingSpeed = 3f;
     public const float MaxTypingSpeed = 16f;
@@ -33,7 +33,7 @@ public class Configuration : IPluginConfiguration
 
     // Developer mode.
     public bool DeveloperMode { get; set; } = false;
-    public InputBackend InputBackend { get; set; } = InputBackend.WindowMessageChar;
+    public InputBackend InputBackend { get; set; } = InputBackend.Keyboard;
     public bool PauseOnEnemyCasts { get; set; } = true;
     public bool PauseWhileEnemyCastBarVisible { get; set; } = false;
     public string ExtraPauseAddons { get; set; } = string.Empty;
@@ -52,6 +52,11 @@ public class Configuration : IPluginConfiguration
         // Version 1 resumed 0.5 s after an attack, which is too soon: a key 0.67 s after the cast ended got inputs disabled.
         if (Version < 2 && PauseTrailSeconds == 0.5f)
             PauseTrailSeconds = DefaultPauseTrailSeconds;
+
+        // Version 2 posted letters to the game window, which the mini-game doesn't count as typing, so it expelled the
+        // player for inactivity after about a minute and a half.
+        if (Version < 3 && InputBackend == InputBackend.WindowMessageChar)
+            InputBackend = InputBackend.Keyboard;
 
         Version = CurrentVersion;
         Save();

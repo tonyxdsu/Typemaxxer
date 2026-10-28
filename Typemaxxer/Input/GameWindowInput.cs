@@ -71,6 +71,30 @@ internal static unsafe class GameWindowInput
         if (!IsForeground())
             return false;
 
+        ReleaseHeldKeys(all: true);
+        return Press(virtualKey, hold);
+    }
+
+    /// <summary>
+    /// Types a character with real key presses through Windows, holding Shift when the keyboard layout needs it, so the
+    /// game handles it exactly like your own typing. False when the game isn't in front, or the character has no key on
+    /// this layout (or needs Ctrl or AltGr); the caller then posts it instead.
+    /// </summary>
+    public static bool TypeRealChar(char c, TimeSpan hold)
+    {
+        if (!IsForeground() || !TryGetVirtualKey(c, out var virtualKey, out var needsShift, out var needsCtrlOrAlt) || needsCtrlOrAlt)
+            return false;
+
+        // Let go of the previous key first, so a Shift still held for it can't change this character.
+        ReleaseHeldKeys(all: true);
+        if (needsShift && !Press(NativeMethods.VkShift, hold))
+            return false;
+        return Press(virtualKey, hold);
+    }
+
+    // Keys are let go in reverse order (see ReleaseHeldKeys), so a letter comes up before the Shift held for it.
+    private static bool Press(ushort virtualKey, TimeSpan hold)
+    {
         var scanCode = (ushort)NativeMethods.MapVirtualKeyW(virtualKey, NativeMethods.MapVkVkToVsc);
         if (!SendKeyboardInput(virtualKey, scanCode, 0))
             return false;
@@ -119,12 +143,13 @@ internal static unsafe class GameWindowInput
                    : TimeSpan.Zero;
     }
 
-    /// <summary>The virtual key for a character on the current keyboard layout, and whether it needs Shift.</summary>
-    public static bool TryGetVirtualKey(char c, out ushort virtualKey, out bool needsShift)
+    /// <summary>The virtual key for a character on the current keyboard layout, and which modifiers it needs.</summary>
+    public static bool TryGetVirtualKey(char c, out ushort virtualKey, out bool needsShift, out bool needsCtrlOrAlt)
     {
         var result = NativeMethods.VkKeyScanW(c);
         virtualKey = (ushort)(result & 0xFF);
         needsShift = (result & 0x100) != 0;
+        needsCtrlOrAlt = (result & 0x600) != 0;
         return result != -1;
     }
 

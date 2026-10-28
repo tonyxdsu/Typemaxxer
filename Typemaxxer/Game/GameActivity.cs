@@ -3,24 +3,11 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 namespace Typemaxxer.Game;
 
 /// <summary>
-/// The game decides whether you're active from its own keyboard and mouse handling, which never sees the keys
-/// Typemaxxer posts to the input box, so it would expel you from the duty for inactivity. Typemaxxer's typing is your
-/// playing: every key it sends counts as activity, exactly like pressing that key yourself. Nothing is reset while
-/// Typemaxxer isn't typing.
+/// The game's inactivity timers, for diagnostics. Keybound Brawler doesn't go by these: it expels players who type no
+/// letters with the keyboard for about a minute and a half, which is why Typemaxxer types with real key presses.
 /// </summary>
 public static unsafe class GameActivity
 {
-    public static void MarkActive()
-    {
-        var timers = InputTimerModule.Instance();
-        if (timers == null)
-            return;
-
-        timers->AfkTimer = 0;
-        timers->ContentInputTimer = 0;
-        timers->InputTimer = 0;
-    }
-
     /// <summary>All of the game's inactivity timers, for the session log.</summary>
     public static string Describe()
     {
