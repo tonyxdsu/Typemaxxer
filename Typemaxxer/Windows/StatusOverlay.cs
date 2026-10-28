@@ -46,9 +46,9 @@ public class StatusOverlay : Window, IDisposable
         if (plugin.Configuration.DeveloperMode)
         {
             if (plugin.Recorder.IsRecording)
-                ImGui.TextColored(ImGuiColors.DalamudRed, "Recording");
+                ImGui.TextColored(ImGuiColors.DalamudRed, $"Recording ({Plugin.VersionLabel})");
             else
-                ImGui.TextDisabled("Not recording");
+                ImGui.TextDisabled($"Not recording ({Plugin.VersionLabel})");
         }
     }
 }

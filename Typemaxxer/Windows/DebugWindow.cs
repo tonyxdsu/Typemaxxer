@@ -24,7 +24,7 @@ public class DebugWindow : Window, IDisposable
     private DateTime? testStartsAt;
     private InputTest? test;
 
-    public DebugWindow(Plugin plugin) : base("Typemaxxer - Developer###TypemaxxerDeveloper")
+    public DebugWindow(Plugin plugin) : base($"Typemaxxer {Plugin.VersionLabel} - Developer###TypemaxxerDeveloper")
     {
         SizeConstraints = new WindowSizeConstraints
         {

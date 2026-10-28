@@ -31,6 +31,9 @@ public sealed class Plugin : IDalamudPlugin
 
     private const string CommandName = "/tmx";
 
+    // E.g. "v0.67", from <Version> in the project file. Shown in the window titles, so it's easy to see a reload took.
+    public static string VersionLabel { get; } = FormatVersion(typeof(Plugin).Assembly.GetName().Version);
+
     // The mini-game's windows can disappear briefly (between waves, during animations),
     // so only count the match as over once they have been gone for this long.
     private static readonly TimeSpan LeaveGrace = TimeSpan.FromSeconds(3);
@@ -120,6 +123,13 @@ public sealed class Plugin : IDalamudPlugin
         Recorder.Dispose();
         CommandManager.RemoveHandler(CommandName);
     }
+
+    private static string FormatVersion(System.Version? version) => version switch
+    {
+        null => "v?",
+        { Build: > 0 } => $"v{version.Major}.{version.Minor}.{version.Build}",
+        _ => $"v{version.Major}.{version.Minor}",
+    };
 
     public void ToggleMainUi() => MainWindow.Toggle();
     public void ToggleDebugUi() => DebugWindow.Toggle();

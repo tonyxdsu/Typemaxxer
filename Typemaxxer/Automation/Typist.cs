@@ -100,7 +100,7 @@ public sealed class Typist
         plugin.Recorder.Write("TYPIST", enabled ? "switched on" : $"switched off{(message != null ? $": {message}" : string.Empty)}");
         Plugin.ChatGui.Print(
             message ?? (enabled
-                ? "Typemaxxer is on. It types the prompts during Keybound Brawler matches; press Enter after each one to attack."
+                ? $"Typemaxxer {Plugin.VersionLabel} is on. It types the prompts during Keybound Brawler matches; press Enter after each one to attack."
                 : "Typemaxxer is off."),
             "Typemaxxer");
     }

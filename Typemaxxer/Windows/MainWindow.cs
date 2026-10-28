@@ -12,7 +12,7 @@ public class MainWindow : Window, IDisposable
 {
     private readonly Plugin plugin;
 
-    public MainWindow(Plugin plugin) : base("Typemaxxer###TypemaxxerMain")
+    public MainWindow(Plugin plugin) : base($"Typemaxxer {Plugin.VersionLabel}###TypemaxxerMain")
     {
         SizeConstraints = new WindowSizeConstraints
         {
