@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Version>0.1.0.0</Version>
+    <!-- Manifest fields (see https://github.com/goatcorp/DalamudPackager/blob/827d88dc/DalamudPackager/DalamudPackager.cs#L420) -->
+    <Author>tonyxdsu</Author>
+    <Name>Typemaxxer</Name>
+    <Punchline>Types the Keybound Brawler prompts for you, at a human pace.</Punchline>
+    <Description>Typemaxxer reads the prompts above the enemies in the Gold Saucer's Keybound Brawler and types them for you at a natural, human-like speed. You stay in control: by default it types each prompt and you press Enter to attack.
+
+It only acts inside Keybound Brawler, never types into the chat box, goes quiet during enemy attacks and switches itself off when you leave the match. Open it with /tmx.</Description>
+    <RepoUrl>https://github.com/tonyxdsu/Typemaxxer</RepoUrl>
+    <Tags>gold saucer;keybound brawler;typing;minigame;mgc</Tags>
+  </PropertyGroup>
+
+  <!-- Lets the plugin build from Linux/WSL as well as Windows. -->
+  <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>
