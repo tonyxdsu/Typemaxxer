@@ -68,7 +68,6 @@ public sealed class Typist
     private int clearAttempts;
     private bool enterWasDown;
     private bool wasHolding;
-    private bool closedForAttack;
 
     public Typist(Plugin plugin)
     {
@@ -133,8 +132,6 @@ public sealed class Typist
         if (waitReason != null || plugin.PauseDetector.IsPaused)
         {
             wasHolding = true;
-            if (waitReason == null && plugin.PauseDetector.AttackIncoming)
-                CloseInputBoxForAttack(frame);
             if (waitReason != null)
                 Show(TypistState.Waiting, waitReason);
             else
@@ -145,7 +142,6 @@ public sealed class Typist
         if (wasHolding)
         {
             wasHolding = false;
-            closedForAttack = false;
             nextKeyAt = Max(nextKeyAt, now + timing.ReactionDelay());
         }
 
@@ -371,29 +367,6 @@ public sealed class Typist
         else
             nextKeyAt = now + (plugin.Configuration.AutoPressEnter ? timing.SubmitDelay() : TimeSpan.Zero);
         ShowTyping();
-    }
-
-    // Cursed Gaze punished the first key after it every time, even 2.5 s later, and each time the input box was still
-    // open with a half-typed prompt when it landed. So while keys are still safe (in the quiet-before window), empty the
-    // box and close it with Enter, or submit the prompt if it's complete and the player asked Typemaxxer to press Enter.
-    private void CloseInputBoxForAttack(KtgFrame frame)
-    {
-        if (closedForAttack || !frame.InputOpen)
-            return;
-
-        closedForAttack = true;
-        if (target != null && plugin.Configuration.AutoPressEnter && frame.InputText is { } typed && IsTypedPrefix(target.Text, typed))
-        {
-            plugin.Recorder.Write("TYPIST", $"submitting \"{typed}\" before the attack lands (Enter sent={Sender.SendEnter()})");
-            submittedAt = DateTime.UtcNow;
-            return;
-        }
-
-        var presses = Math.Min((frame.InputText?.Length ?? TypedCount) + 1, 64);
-        for (var i = 0; i < presses; i++)
-            Sender.SendBackspace();
-        plugin.Recorder.Write("TYPIST", $"closing the input box before the attack lands ({presses} backspaces, Enter sent={Sender.SendEnter()})");
-        TypedCount = 0;
     }
 
     // Clears text that doesn't belong to the current prompt, e.g. from a prompt another player finished first.
