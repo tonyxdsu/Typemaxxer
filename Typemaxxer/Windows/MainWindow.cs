@@ -129,7 +129,7 @@ public class MainWindow : Window, IDisposable
 
         UiHelpers.HelpMarker("Off: Typemaxxer types each prompt, and you press Enter to attack.\nOn: Typemaxxer presses Enter for you as well.\n\n" +
                              "Either way, while the game window is in front Typemaxxer types with real key presses, so the game counts you as active. " +
-                             "If you switch to another window, it keeps typing, but the game may expel you for inactivity after about a minute and a half.");
+                             "If you switch to another window, it stops typing until you click the game again (see Advanced).");
 
         var showOverlay = configuration.ShowStatusOverlay;
         if (ImGui.Checkbox("Show status during matches", ref showOverlay))
@@ -173,6 +173,20 @@ public class MainWindow : Window, IDisposable
             configuration.PauseTrailSeconds = Configuration.DefaultPauseTrailSeconds;
             configuration.Save();
         }
+
+        ImGuiHelpers.ScaledDummy(6f);
+        var typeInBackground = configuration.TypeInBackground;
+        if (ImGui.Checkbox("Send simulated keypresses upon focus loss.", ref typeInBackground))
+        {
+            configuration.TypeInBackground = typeInBackground;
+            configuration.Save();
+        }
+
+        ImGui.PushTextWrapPos();
+        ImGui.TextColored(ImGuiColors.DalamudOrange,
+                          "WARNING: You will EXIT the instance automatically after 90s of continuous loss of focus of the client. " +
+                          "This option is meant for short alt-tabbing only.");
+        ImGui.PopTextWrapPos();
 
         ImGuiHelpers.ScaledDummy(6f);
         var developerMode = configuration.DeveloperMode;

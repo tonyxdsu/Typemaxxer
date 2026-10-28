@@ -25,6 +25,7 @@ public class Configuration : IPluginConfiguration
     public float TypingSpeed { get; set; } = DefaultTypingSpeed;
     public float PromptPauseSeconds { get; set; } = DefaultPromptPauseSeconds;
     public bool AutoPressEnter { get; set; } = false;
+    public bool TypeInBackground { get; set; } = false;
     public bool ShowStatusOverlay { get; set; } = true;
     public bool HasSeenIntro { get; set; } = false;
 

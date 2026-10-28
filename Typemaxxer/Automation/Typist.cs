@@ -68,6 +68,7 @@ public sealed class Typist
     private int clearAttempts;
     private bool enterWasDown;
     private bool wasHolding;
+    private bool wasFocused = true;
 
     public Typist(Plugin plugin)
     {
@@ -126,6 +127,7 @@ public sealed class Typist
 
         var now = DateTime.UtcNow;
         TrackTarget(frame, now);
+        WarnIfFocusLost(frame);
 
         // Hold off while something else needs the keyboard or an enemy attack is landing; resume like a person would.
         var waitReason = WhyWait(frame);
@@ -226,9 +228,30 @@ public sealed class Typist
             return "Waiting: the chat box is open";
         if (plugin.ImGuiWantsKeyboard)
             return "Waiting: click the game screen so it has keyboard focus";
-        if (plugin.Configuration.InputBackend == InputBackend.SendInputUnicode && !frame.GameWindowFocused)
-            return "Waiting: the game window isn't focused";
+        // Without focus only simulated key presses are possible, and the game counts those as idle and expels you.
+        if (!frame.GameWindowFocused &&
+            (!plugin.Configuration.TypeInBackground || plugin.Configuration.InputBackend == InputBackend.SendInputUnicode))
+            return "Stopped: the game window isn't in front - click it to carry on";
         return null;
+    }
+
+    // Warns once each time the game window loses focus during a match: in chat, and by flashing the game's taskbar
+    // button, since the player is looking at another window.
+    private void WarnIfFocusLost(KtgFrame frame)
+    {
+        if (frame.GameWindowFocused == wasFocused)
+            return;
+
+        wasFocused = frame.GameWindowFocused;
+        if (wasFocused)
+            return;
+
+        GameWindowInput.FlashTaskbarButton();
+        plugin.Recorder.Write("TYPIST", $"game window lost focus (type in background={plugin.Configuration.TypeInBackground})");
+        Plugin.ChatGui.PrintError(plugin.Configuration.TypeInBackground
+            ? "The game window isn't in front. Typemaxxer keeps typing with simulated key presses, but the game counts those as idle: " +
+              "you will be expelled from the duty after about 90 s without focus."
+            : "The game window isn't in front, so Typemaxxer stopped typing. Click the game to carry on.", "Typemaxxer");
     }
 
     // Picks the next prompt: one the input box already holds the start of (so a prompt that blinked out keeps its

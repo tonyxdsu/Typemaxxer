@@ -134,6 +134,18 @@ internal static unsafe class GameWindowInput
         return NativeMethods.SendInput(1, inputs, Marshal.SizeOf<NativeMethods.Input>()) == 1;
     }
 
+    /// <summary>Flashes the game's taskbar button until the game window is brought to the front.</summary>
+    public static void FlashTaskbarButton()
+    {
+        var info = new NativeMethods.FlashWindowInfo
+        {
+            Size = (uint)Marshal.SizeOf<NativeMethods.FlashWindowInfo>(),
+            Window = Handle,
+            Flags = NativeMethods.FlashAll | NativeMethods.FlashUntilForeground,
+        };
+        NativeMethods.FlashWindowEx(ref info);
+    }
+
     /// <summary>How long ago Windows last saw real keyboard or mouse input, in any application.</summary>
     public static TimeSpan SystemIdleTime()
     {

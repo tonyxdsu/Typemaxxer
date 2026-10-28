@@ -42,6 +42,23 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetLastInputInfo(ref LastInputInfo info);
 
+    public const uint FlashAll = 0x3;
+    public const uint FlashUntilForeground = 0xC;
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool FlashWindowEx(ref FlashWindowInfo info);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FlashWindowInfo
+    {
+        public uint Size;
+        public nint Window;
+        public uint Flags;
+        public uint Count;
+        public uint Timeout;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct LastInputInfo
     {
