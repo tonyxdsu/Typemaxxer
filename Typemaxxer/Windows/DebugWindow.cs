@@ -265,11 +265,12 @@ public class DebugWindow : Window, IDisposable
             return;
         }
 
-        if (!ImGui.BeginTable("prompts", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg))
+        if (!ImGui.BeginTable("prompts", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg))
             return;
 
         ImGui.TableSetupColumn("Prompt");
         ImGui.TableSetupColumn("Row");
+        ImGui.TableSetupColumn("Kind");
         ImGui.TableSetupColumn("On screen for");
         ImGui.TableSetupColumn("Position");
         ImGui.TableHeadersRow();
@@ -282,6 +283,8 @@ public class DebugWindow : Window, IDisposable
             ImGui.TextColored(plugin.Typist.Target?.RowId == word.RowId ? ImGuiColors.HealerGreen : ImGuiColors.DalamudWhite, word.Text);
             ImGui.TableNextColumn();
             ImGui.Text($"{word.RowId}");
+            ImGui.TableNextColumn();
+            ImGui.Text($"{word.Kind}");
             ImGui.TableNextColumn();
             ImGui.Text($"{(now - word.FirstSeen).TotalSeconds:0.0} s");
             ImGui.TableNextColumn();

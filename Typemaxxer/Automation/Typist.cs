@@ -29,8 +29,11 @@ public enum TypistState
 /// </summary>
 public sealed class Typist
 {
-    // A prompt can flicker out of view for a moment while typing; only drop it once it has been gone this long.
+    // A prompt can flicker out of view for a moment; only drop it once it has been gone this long. Once typing has
+    // started, allow longer: prompts blink out for about a second while "Phrases partially obscured!", and the text is
+    // already known, so typing carries on.
     private static readonly TimeSpan VanishGrace = TimeSpan.FromSeconds(0.15);
+    private static readonly TimeSpan StartedVanishGrace = TimeSpan.FromSeconds(1.5);
 
     // If a prompt is still on screen this long after Enter, the attack didn't land, so try again.
     private static readonly TimeSpan RetryAfterSubmit = TimeSpan.FromSeconds(0.6);
@@ -144,7 +147,7 @@ public sealed class Typist
 
         if (target == null)
         {
-            target = frame.Words.FirstOrDefault(w => !IsSkipped(w.RowId, now));
+            target = PickTarget(frame, now);
             if (target == null)
             {
                 Show(TypistState.LookingForPrompts, "Looking for prompts...");
@@ -228,21 +231,50 @@ public sealed class Typist
         return null;
     }
 
-    // Drops the target once its prompt has left the screen: the attack landed, or the enemy is gone.
+    // Picks the next prompt: one the input box already holds the start of (so a prompt that blinked out keeps its
+    // progress), then special phrases, then enemies casting an attack (defeat them before it lands), then the oldest,
+    // with prompts on their way out last.
+    private ActiveWord? PickTarget(KtgFrame frame, DateTime now)
+    {
+        var candidates = frame.Words.Where(w => !IsSkipped(w.RowId, now)).ToList();
+        if (frame.InputText is { Length: > 0 } typed && candidates.FirstOrDefault(w => IsTypedPrefix(typed, w.Text)) is { } started)
+            return started;
+
+        return candidates.OrderBy(w => Priority(w.Kind)).ThenBy(w => w.FirstSeen).ThenBy(w => w.X).FirstOrDefault();
+    }
+
+    private static int Priority(WordKind kind) => kind switch
+    {
+        WordKind.Special => 0,
+        WordKind.Casting => 1,
+        WordKind.Normal => 2,
+        _ => 3,
+    };
+
+    // Drops the target once its prompt has left the screen (the attack landed, or the enemy is gone) or turns grey
+    // (someone else defeated it first).
     private void TrackTarget(KtgFrame frame, DateTime now)
     {
         if (target == null)
             return;
 
-        if (frame.Words.Any(w => w.RowId == target.RowId))
+        var current = frame.Words.FirstOrDefault(w => w.RowId == target.RowId);
+        if (current != null)
         {
             targetMissingSince = null;
+            if (current.Kind == WordKind.Dimmed && submittedAt == null)
+            {
+                plugin.Recorder.Write("TYPIST", $"prompt greyed out after {TypedCount}/{target.Text.Length}: \"{target.Text}\"");
+                Forget();
+            }
+
             return;
         }
 
-        // After Enter the prompt is expected to go at once; otherwise allow for a brief flicker.
+        // After Enter the prompt is expected to go at once; otherwise allow for it blinking out.
         targetMissingSince ??= now;
-        if (submittedAt == null && now - targetMissingSince.Value < VanishGrace)
+        var grace = TypedCount > 0 ? StartedVanishGrace : VanishGrace;
+        if (submittedAt == null && now - targetMissingSince.Value < grace)
             return;
 
         plugin.Recorder.Write("TYPIST", submittedAt != null
