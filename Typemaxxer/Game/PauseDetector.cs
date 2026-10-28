@@ -16,9 +16,11 @@ public sealed record KtgEnemy(
 
 /// <summary>
 /// Decides when to go quiet. Most enemy casts are attacks you stop by defeating the enemy first, so Typemaxxer keeps
-/// typing through them. A few, like "look away" gazes, punish typing near their end by disabling input for seven
-/// seconds; for those Typemaxxer stays silent from <see cref="Configuration.PauseLeadSeconds"/> before the cast
-/// finishes until <see cref="Configuration.PauseTrailSeconds"/> after it.
+/// typing through them. A few punish typing: about 0.7 s after their cast ends they put a 2-second status effect on
+/// you, and typing while it's on gets you "Letterlocked" (input disabled for 7 seconds). Typemaxxer goes quiet
+/// <see cref="Configuration.PauseLeadSeconds"/> before such a cast ends, stays quiet for
+/// <see cref="Configuration.PauseTrailSeconds"/> after it (until the status shows up), and then for as long as the
+/// status is on you.
 /// </summary>
 public sealed class PauseDetector
 {
@@ -26,7 +28,21 @@ public sealed class PauseDetector
     private static readonly Dictionary<uint, string> PunishingCasts = new()
     {
         [49529] = "Cursed Gaze",
+        [49702] = "Dynamic Sensory Jammer",
     };
+
+    // The status effect each of those attacks leaves on you while typing is dangerous.
+    private static readonly Dictionary<uint, string> DangerStatuses = new()
+    {
+        [5346] = "Cursed Gaze",
+        [5437] = "Dynamic Sensory Jammer",
+    };
+
+    // "Letterlocked": input disabled after typing during one of those attacks.
+    private const uint LetterlockedStatus = 5347;
+
+    // Stay quiet this long after a danger status or a lockout wears off, to be safe.
+    private static readonly TimeSpan AfterStatus = TimeSpan.FromSeconds(0.3);
 
     // The game object id meaning "no target".
     private const ulong NoTarget = 0xE0000000;
@@ -49,8 +65,28 @@ public sealed class PauseDetector
             return;
         }
 
+        var now = DateTime.UtcNow;
+        var afterCast = TimeSpan.FromSeconds(configuration.PauseTrailSeconds);
+
         // Typing during an attack disables input for a few seconds; any key sent before it ends is wasted.
         var reason = frame.InputLockout is { } secondsLeft ? $"inputs disabled ({secondsLeft} s)" : null;
+        var statusQuiet = reason != null;
+        if (Plugin.ObjectTable.LocalPlayer is { } player)
+        {
+            foreach (var status in player.StatusList)
+            {
+                if (status.StatusId == LetterlockedStatus)
+                    reason ??= $"inputs disabled ({status.RemainingTime:0} s)";
+                else if (configuration.PauseOnEnemyCasts && DangerStatuses.TryGetValue(status.StatusId, out var attack))
+                    reason ??= $"{attack} ({status.RemainingTime:0.0} s left)";
+                else
+                    continue;
+
+                statusQuiet = true;
+            }
+        }
+
+        var castQuiet = false;
         var extraPunishing = configuration.ExtraQuietCasts.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var playerId = Plugin.ObjectTable.LocalPlayer?.GameObjectId;
         var enemies = new List<KtgEnemy>();
@@ -78,29 +114,39 @@ public sealed class PauseDetector
 
             var remaining = character.TotalCastTime - character.CurrentCastTime;
             if (configuration.PauseOnEnemyCasts && punishes && remaining <= configuration.PauseLeadSeconds)
+            {
                 reason ??= $"{castName} ({Math.Max(0, remaining):0.0} s left)";
+                castQuiet = true;
+            }
         }
 
         Enemies = enemies;
 
         if (reason == null && configuration.PauseWhileEnemyCastBarVisible &&
             frame.Addons.Any(a => a.Visible && a.Name == KtgUi.EnemyCastBarAddon))
+        {
             reason = "the enemy cast bar is showing";
+            castQuiet = true;
+        }
 
         if (reason == null)
         {
             var extraAddons = configuration.ExtraPauseAddons.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             var visible = frame.Addons.FirstOrDefault(a => a.Visible && extraAddons.Contains(a.Name, StringComparer.OrdinalIgnoreCase));
             if (visible != null)
+            {
                 reason = $"{visible.Name} is showing";
+                castQuiet = true;
+            }
         }
 
-        var now = DateTime.UtcNow;
+        // After a cast, stay quiet long enough for its status to show up; after a status, only a moment more.
+        if (castQuiet && now + afterCast > quietUntil)
+            quietUntil = now + afterCast;
+        if (statusQuiet && now + AfterStatus > quietUntil)
+            quietUntil = now + AfterStatus;
         if (reason != null)
-        {
-            quietUntil = now + TimeSpan.FromSeconds(configuration.PauseTrailSeconds);
             Reason = reason;
-        }
 
         IsPaused = reason != null || now < quietUntil;
         if (!IsPaused)

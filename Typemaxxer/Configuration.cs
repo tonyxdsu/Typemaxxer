@@ -14,8 +14,8 @@ public class Configuration : IPluginConfiguration
     public const float MaxTypingSpeed = 16f;
     public const float DefaultPromptPauseSeconds = 0.2f;
     public const float MaxPromptPauseSeconds = 1f;
-    public const float DefaultPauseLeadSeconds = 2.5f;
-    public const float DefaultPauseTrailSeconds = 3f;
+    public const float DefaultPauseLeadSeconds = 1.5f;
+    public const float DefaultPauseTrailSeconds = 1f;
     public const float MaxPauseTrailSeconds = 6f;
 
     public int Version { get; set; } = CurrentVersion;

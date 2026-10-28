@@ -148,21 +148,24 @@ public class MainWindow : Window, IDisposable
         if (!ImGui.CollapsingHeader("Advanced"))
             return;
 
-        ImGui.TextWrapped("Some enemy attacks, like Cursed Gaze, punish typing near their end, so Typemaxxer goes quiet just " +
-                          "before they land. Through other attacks it keeps typing, so you can defeat the enemy first. " +
-                          "You shouldn't need to change these.");
+        ImGui.TextWrapped("Some enemy attacks, like Cursed Gaze, punish typing just after they land. Typemaxxer goes quiet " +
+                          "shortly before they land and stays quiet until their effect wears off. Through other attacks it " +
+                          "keeps typing, so you can defeat the enemy first. You shouldn't need to change these.");
 
         var lead = configuration.PauseLeadSeconds;
         if (ImGui.SliderFloat("Quiet before an attack", ref lead, 0.5f, 5f, "%.1f s"))
             configuration.PauseLeadSeconds = lead;
         if (ImGui.IsItemDeactivatedAfterEdit())
             configuration.Save();
+        UiHelpers.HelpMarker("How long before the attack lands Typemaxxer stops typing.");
 
         var trail = configuration.PauseTrailSeconds;
         if (ImGui.SliderFloat("Quiet after an attack", ref trail, 0f, Configuration.MaxPauseTrailSeconds, "%.1f s"))
             configuration.PauseTrailSeconds = trail;
         if (ImGui.IsItemDeactivatedAfterEdit())
             configuration.Save();
+        UiHelpers.HelpMarker("Covers the moment between the attack landing and its effect showing up on you (about 0.7 s). " +
+                             "After that, Typemaxxer stays quiet for as long as the effect lasts, however this is set.");
 
         if (ImGui.Button("Reset to defaults"))
         {

@@ -215,8 +215,9 @@ public class DebugWindow : Window, IDisposable
             configuration.Save();
         }
 
-        UiHelpers.HelpMarker("Cursed Gaze, plus the attacks listed below: Typemaxxer stops \"Quiet before an attack\" seconds before they " +
-                             "land (set under Advanced in the main window). Other attacks are ones to defeat the enemy before, so it keeps typing.");
+        UiHelpers.HelpMarker("Cursed Gaze and Dynamic Sensory Jammer, plus the attacks listed below: Typemaxxer stops \"Quiet before an " +
+                             "attack\" seconds before they land (set under Advanced in the main window) and stays quiet while their effect is " +
+                             "on you. Other attacks are ones to defeat the enemy before, so it keeps typing.");
 
         var extraQuietCasts = configuration.ExtraQuietCasts;
         if (ImGui.InputText("Also go quiet for these attacks", ref extraQuietCasts, 512))
