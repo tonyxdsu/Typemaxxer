@@ -53,3 +53,20 @@ Bugs seen in session-20261028-073405.log
   "elixir" from 93.578). Skip grey prompts when picking, or don't drop a prompt that was already grey
   when it was picked.
 - Similar every-frame "target: Myrna" spam from 360.575.
+
+
+Expelled while the game window was in the background
+----------------------------------------------------
+
+Log: session-20261028-075857.log (v0.70). The game window lost focus at 151.684 and got it back at 222.359.
+Expelled at 219.315. Typing carried on throughout (30-60 keys per 10 s, 53 attacks landed in the last 2 min),
+but with the game in the background the Keyboard sender falls back to posting WM_CHAR, which the mini-game
+doesn't count. That's 67.6 s from focus loss to expulsion. Short losses (95.2-126.0, 31 s) were harmless.
+Real key presses (SendInput) can't go to a background window: they would type into the focused app.
+
+Options:
+1. Experiment: post WM_KEYDOWN/WM_KEYUP for letters while in the background (the WM_KEYDOWN test backend) and
+   see whether that counts as activity. Doubtful, since posted Enter never registered in the game's key state.
+2. Warn: after ~40 s in the background, print a chat message and play a sound ("bring the game to the front within
+   ~20 s or you'll be expelled") and show it in the status line.
+3. Pause while the game is in the background (safest, but loses the points it would still score until expelled).
