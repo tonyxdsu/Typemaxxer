@@ -66,7 +66,7 @@ public class MainWindow : Window, IDisposable
 
         ImGui.TextWrapped("1. Join a Keybound Brawler match at the Gold Saucer.");
         ImGui.TextWrapped("2. Press Start Typing! (or type /tmx on), then click anywhere on the game screen.");
-        ImGui.TextWrapped("3. Typemaxxer types the prompt above an enemy at a human pace. You press Enter to attack.");
+        ImGui.TextWrapped("3. Typemaxxer types the prompt above an enemy and presses Enter to attack. To press Enter yourself, turn off Press Enter for me.");
         ImGuiHelpers.ScaledDummy(2f);
         ImGui.TextWrapped("It goes quiet during enemy attacks, never types into the chat box, and switches itself off " +
                           "when you leave the match. It makes no network connections, so nothing leaves your PC.");

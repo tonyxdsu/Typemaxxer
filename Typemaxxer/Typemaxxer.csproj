@@ -6,7 +6,7 @@
     <Author>tonyxdsu</Author>
     <Name>Typemaxxer</Name>
     <Punchline>Types the Keybound Brawler prompts for you, at the speed you choose.</Punchline>
-    <Description>Typemaxxer reads the prompts above the enemies in the Gold Saucer's Keybound Brawler and types them for you with natural, uneven timing, at Grandpa, Gamer or Ludicrous Speed. You stay in control: by default it types each prompt and you press Enter to attack.
+    <Description>Typemaxxer reads the prompts above the enemies in the Gold Saucer's Keybound Brawler and types them for you with natural, uneven timing, at Grandpa, Gamer or Ludicrous Speed. It presses Enter to attack too, or leaves that to you if you prefer.
 
 It only acts inside Keybound Brawler, never types into the chat box, goes quiet for attacks that punish typing, stops when the game window isn't in front and switches itself off when you leave the match. Open it with /tmx.</Description>
     <RepoUrl>https://github.com/tonyxdsu/Typemaxxer</RepoUrl>
