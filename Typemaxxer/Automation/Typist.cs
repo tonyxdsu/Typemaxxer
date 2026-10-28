@@ -81,6 +81,9 @@ public sealed class Typist
     public ActiveWord? Target => target;
     public int TypedCount { get; private set; }
 
+    /// <summary>When the game window lost focus while Typemaxxer was on in a match; null while it has focus.</summary>
+    public DateTime? FocusLostAt { get; private set; }
+
     public void SetEnabled(bool enabled, string? message)
     {
         if (enabled && Plugin.ClientState.ClientLanguage == ClientLanguage.Japanese)
@@ -111,6 +114,13 @@ public sealed class Typist
         var enterPressed = frame.EnterDown && !enterWasDown;
         enterWasDown = frame.EnterDown;
         framesSinceKey++;
+
+        if (!Enabled || !frame.InKeyboundBrawler)
+        {
+            // Focus only matters while typing in a match; start fresh next time.
+            wasFocused = true;
+            FocusLostAt = null;
+        }
 
         if (!Enabled)
         {
@@ -243,6 +253,7 @@ public sealed class Typist
             return;
 
         wasFocused = frame.GameWindowFocused;
+        FocusLostAt = wasFocused ? null : DateTime.UtcNow;
         if (wasFocused)
             return;
 

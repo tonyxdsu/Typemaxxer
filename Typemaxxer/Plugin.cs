@@ -61,6 +61,7 @@ public sealed class Plugin : IDalamudPlugin
     private MainWindow MainWindow { get; init; }
     private DebugWindow DebugWindow { get; init; }
     private StatusOverlay StatusOverlay { get; init; }
+    private FocusWarning FocusWarning { get; init; }
 
     private readonly WordReader wordReader;
     private readonly IAddonLifecycle.AddonEventDelegate addonEventHandler;
@@ -78,9 +79,11 @@ public sealed class Plugin : IDalamudPlugin
         MainWindow = new MainWindow(this);
         DebugWindow = new DebugWindow(this);
         StatusOverlay = new StatusOverlay(this);
+        FocusWarning = new FocusWarning(this);
         WindowSystem.AddWindow(MainWindow);
         WindowSystem.AddWindow(DebugWindow);
         WindowSystem.AddWindow(StatusOverlay);
+        WindowSystem.AddWindow(FocusWarning);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -119,6 +122,7 @@ public sealed class Plugin : IDalamudPlugin
         MainWindow.Dispose();
         DebugWindow.Dispose();
         StatusOverlay.Dispose();
+        FocusWarning.Dispose();
 
         Recorder.Dispose();
         CommandManager.RemoveHandler(CommandName);

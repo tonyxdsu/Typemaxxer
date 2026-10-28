@@ -39,14 +39,17 @@ public class MainWindow : Window, IDisposable
     private void DrawStatus()
     {
         var typist = plugin.Typist;
-        ImGui.TextColored(UiHelpers.StatusColor(typist.State), typist.Status);
+        var focusLost = typist.FocusLostAt != null;
+        ImGui.TextColored(focusLost ? ImGuiColors.DalamudRed : UiHelpers.StatusColor(typist.State), typist.Status);
+        if (focusLost && plugin.Configuration.TypeInBackground)
+            ImGui.TextColored(ImGuiColors.DalamudRed, "The game isn't in front: you will be expelled after about 90 s without focus.");
 
         var enabled = typist.Enabled;
         var color = enabled ? ImGuiColors.DalamudRed : ImGuiColors.HealerGreen;
         ImGui.PushStyleColor(ImGuiCol.Button, color * new Vector4(0.6f, 0.6f, 0.6f, 1f));
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, color * new Vector4(0.75f, 0.75f, 0.75f, 1f));
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, color);
-        if (ImGui.Button(enabled ? "Stop typing" : "Start typing", new Vector2(ImGui.GetContentRegionAvail().X, 40 * ImGuiHelpers.GlobalScale)))
+        if (ImGui.Button(enabled ? "Stop typing" : "Start Typing!", new Vector2(ImGui.GetContentRegionAvail().X, 40 * ImGuiHelpers.GlobalScale)))
             typist.SetEnabled(!enabled, null);
         ImGui.PopStyleColor(3);
 
@@ -62,7 +65,7 @@ public class MainWindow : Window, IDisposable
             return;
 
         ImGui.TextWrapped("1. Join a Keybound Brawler match at the Gold Saucer.");
-        ImGui.TextWrapped("2. Press Start typing (or type /tmx on), then click anywhere on the game screen.");
+        ImGui.TextWrapped("2. Press Start Typing! (or type /tmx on), then click anywhere on the game screen.");
         ImGui.TextWrapped("3. Typemaxxer types the prompt above an enemy at a human pace. You press Enter to attack.");
         ImGuiHelpers.ScaledDummy(2f);
         ImGui.TextWrapped("It goes quiet during enemy attacks, never types into the chat box, and switches itself off " +
